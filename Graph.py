@@ -1,9 +1,15 @@
 # Defines the vertices, and edges in a graph.
 # Competition Graphs: K5, K8, K9,
 # other graphs
+#
+# numpy, scipy for Windows can be downloaded from:
+#	https://www.lfd.uci.edu/~gohlke/pythonlibs/
 
 import math
 import json
+import scipy
+import planarity
+from scipy.sparse import lil_matrix
 
 #------------------------------------
 
@@ -39,14 +45,13 @@ def Kn(n):
 	angle = -math.pi /2 # Initial angle. Note: 0,0 = top-left... so -degree = counter-clockwise
 	centerX, centerY = 200, 150
 	angleIncrement = math.pi *2 /n
-	for i in range(n):
-		angle += angleIncrement
-		verts.append(
-			Vertex(
-				radius *math.cos(angle) +centerX, # x
-				radius *math.sin(angle) +centerY  # y
-			)
+	verts = [
+		Vertex(
+			radius *math.cos(angleIncrement *i) +centerX, # x
+			radius *math.sin(angleIncrement *i) +centerY  # y
 		)
+		for i in range(0, n)
+	]
 	# Make edges
 	edges = []
 	for index1, v1 in enumerate(verts):
@@ -54,12 +59,38 @@ def Kn(n):
 			edges.append(Edge(v1, v2))
 	return Graph(verts, edges)
 
+def BipartiteGraph(n, m):
+	# First set = top row
+	startX = 5
+	lastX = 495
+	startY = 250 - 50
+	offsetX = (lastX - startX) /n
+	vertsA = [
+		Vertex(offsetX*i +startX, startY)
+		for i in range(0, n)
+	]
+	# Second set = next row
+	offsetX = (lastX - startX) /m
+	startY = 250 + 50
+	vertsB = [
+		Vertex(offsetX*i +startX, startY)
+		for i in range(0, n)
+	]
+	# Connect all vertsA to vertsB
+	edges = [
+		Edge(vertA, vertB)
+		for vertB in vertsB
+		for vertA in vertsA
+	]
+	return Graph(vertsA + vertsB, edges)
+
 def GraphData(graphName):
 	'''
 		Reads the graph with the given name from CompetitionGraphs.json
 		Note: The graphs do NOT have positions, so they can't be drawn yet.
 	'''
-	graphsJson = json.load('CompetitionGraphs.json') [graphName]
+	with open('CompetitionGraphs.json') as graphJson:
+		graphsJson = json.load(graphJson) [graphName]
 	num_verts = graphsJson.get('verts', None)
 	if num_verts is not None:
 		vertices = [Vertex() for i in range(num_verts)]
@@ -71,17 +102,24 @@ def GraphData(graphName):
 	else:
 		vertexDict = {}
 		edgeIndices = []
+		maxIndex = -1
 		# Read list of vertices
 		for edge in graphsJson['edges']:
 			v1Index = edge[0] -1
 			v2Index = edge[1] -1
 			edgeIndices.append(v1Index, v2Index)
+			maxIndex = max(v1Index, v2Index, maxIndex)
 			if vertexDict.get(v1Index, None) is None:
 				vertexDict[v1Index] = Vertex()
 			if vertexDict.get(v2Index, None) is None:
 				vertexDict[v2Index] = Vertex()
 		
 		edges = EdgesFromIndices(vertices, edgeIndices)
+		# Convert dictionary to list
+		vertices = []
+		for i in range(maxIndex):
+			vertices.append(vertexDict.get(i, None))
+		return Graph(vertices, edges)
 
 #------------------------------------
 
@@ -89,7 +127,7 @@ class Vertex:
 	# Defaults
 	radius = 10
 	color = "lightgray"
-	def __init__(self, x,y, label=None,radius=None,color=None):
+	def __init__(self, x=None,y=None, label=None,radius=None,color=None):
 		self.x = x
 		self.y = y
 		self.label = label
@@ -97,6 +135,18 @@ class Vertex:
 			self.color = color
 		if radius and radius >= 0:
 			self.radius = radius
+
+class Edge:
+	# Defaults
+	width = 3
+	color = "black"
+	def __init__(self, vert1, vert2, width=None,color=None):
+		self.vert1 = vert1
+		self.vert2 = vert2
+		if color:
+			self.color = color
+		if width and width >= 0:
+			self.width = width
 
 class EdgeFormula:
 	''' y = mx + b '''
@@ -172,23 +222,44 @@ class EdgeFormula:
 				else:
 					return (self.vert2.x, self.vert2.y)
 
-class Edge:
-	# Defaults
-	width = 3
-	color = "black"
-	def __init__(self, vert1, vert2, width=None,color=None):
-		self.vert1 = vert1
-		self.vert2 = vert2
-		if color:
-			self.color = color
-		if width and width >= 0:
-			self.width = width
-
 class Graph:
 	def __init__(self, vertices, edges):
 		''' Assumes that egdes only use vertices in the verts list. '''
 		self.vertices = vertices
 		self.edges = edges
+	
+	def get_adj_matrix(self):
+		# Start with matrix of 0s
+		matrix = lil_matrix((len(self.vertices), len(self.vertices)))
+		# Fill in matrix from the edges
+		vertToIndexDict = {
+			vert: index
+			for index, vert in enumerate(self.vertices)
+		}
+		
+		for edge in self.edges:
+			index1 = vertToIndexDict[edge.vert1]
+			index2 = vertToIndexDict[edge.vert2]
+			matrix[index1, index2] = 1
+			matrix[index2, index1] = 1
+		return matrix.tocsr()
+	
+	def edges_as_tuples(self):
+		return [
+			(edge.vert1, edge.vert2)
+			for edge in self.edges
+		]
+	
+	def is_planar(self):
+		return planarity.is_planar(self.edges_as_tuples())
+	
+	def ascii(self):
+		return planarity.ascii(self.edges_as_tuples())
+	def planar_embedding(self):
+		# Converts planarity's ascii representation... to be shown in tkinter.
+		ascii = planarity.ascii(self.edges_as_tuples())
+		
+		return 
 	
 	def get_edge_crossings(self):
 		'''
