@@ -4,18 +4,20 @@ from GraphCanvas import GraphCanvas
 
 #-------------------------
 
-#g1 = GraphData('graph1')
-g1 = Kn(5)
+g1 = GraphData('graph1')
+#g1 = Kn(5)
 #verts = [Vertex() for i in range(10)]
 #edges = EdgesFromIndices(verts, [
 #	(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (9,0),
 #	(0,5)
 #])
 #g1 = Graph(verts, edges)
-g1.edgeWeights()
 
-print('planar?',g1.is_planar())
-print(g1.ascii())
+usedEdges = prims_alg(  g1, g1.edgeWeights()  )
+spanTree = Graph(g1.vertices, usedEdges)
+
+#print('planar?',spanTree.is_planar())
+print(spanTree.export_mathematica())
 
 '''
 matrix = g1.get_adj_matrix()
@@ -30,6 +32,7 @@ for i in range(2, 11):
 		print(*ar)
 '''
 
+'''
 #-------------------------
 
 BACKGROUND_COLOR = "light slate gray"
@@ -49,9 +52,11 @@ label.pack() # For things to be visible, it needs to be packed
 w = GraphCanvas(root, width=400, height=300, background="white")
 w.pack()
 #w.draw_graph(g)
-g = BipartiteGraph(5, 3)
+#g = BipartiteGraph(5, 3)
+g = spanTree
 w.draw_graph(g)
 w.show_edge_crossings(g)
+'''
 
 #-------------------------
 
@@ -67,6 +72,7 @@ w.create_oval(90,90,150,150, fill="red")
 w.create_text(100,10,text="HI")
 '''
 
+'''
 def func():
 	func.i = func.i+1
 	g = Kn(func.i)
@@ -78,3 +84,4 @@ next_bttn = tk.Button(root, text="Next", command=func)
 next_bttn.pack()
 
 root.mainloop()
+'''

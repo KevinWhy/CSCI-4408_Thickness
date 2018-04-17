@@ -123,6 +123,31 @@ def GraphData(graphName):
 
 #------------------------------------
 
+def prims_alg(graph, edgeWeights):
+	# Weird way to get first vertex in graph
+	firstVert = None
+	for vert in graph.vertices:
+		firstVert = vert
+		break
+	
+	used_verts = [firstVert]
+	used_edges = []
+	while len(used_edges) < len(graph.vertices) -1:
+		# Add one edge in every iteration of the outer loop
+		for edgeInfo in sorted(edgeWeights.items(), key=lambda edgeInfo: edgeInfo[1]):
+			edge = edgeInfo[0]
+			if ((edge.vert1 not in used_verts and edge.vert2 in used_verts)
+				or (edge.vert1 in used_verts and edge.vert2 not in used_verts)
+			): # Only one of the edges is in the used_verts...
+				# Add it to the list
+				used_verts.append(edge.vert1)
+				used_verts.append(edge.vert2)
+				used_edges.append(edge)
+				break # Restart loop
+	return used_edges
+
+#------------------------------------
+
 class Vertex:
 	# Defaults
 	radius = 10
@@ -227,6 +252,18 @@ class Graph:
 		''' Assumes that egdes only use vertices in the verts list. '''
 		self.vertices = vertices
 		self.edges = edges
+	def export_mathematica(self):
+		out_str = '{'
+		first_row = True
+		for row in self.get_adj_matrix().toarray():
+			if not first_row:
+				out_str += ',\n'
+			out_str += '{'
+			out_str += ','.join([str(int(i)) for i in row])
+			out_str += '}'
+			first_row = False
+		out_str += '}'
+		return out_str
 	
 	def get_adj_matrix(self):
 		# Start with matrix of 0s
@@ -262,7 +299,7 @@ class Graph:
 			vert: sum(adjMatrix[i,:])
 			for i,vert in enumerate(self.vertices)
 		}
-		return edgeWeights = {	
+		return {	
 			edge: vertDegree[edge.vert1] + vertDegree[edge.vert2]
 			for edge in self.edges
 		}
