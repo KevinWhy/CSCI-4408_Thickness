@@ -5,13 +5,15 @@ from GraphCanvas import GraphCanvas
 #-------------------------
 
 #g1 = GraphData('graph1')
-#g1 = Kn(5)
-verts = [Vertex() for i in range(10)]
-edges = EdgesFromIndices(verts, [
-	(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (9,0),
-	(0,5)
-])
-g1 = Graph(verts, edges)
+g1 = Kn(5)
+#verts = [Vertex() for i in range(10)]
+#edges = EdgesFromIndices(verts, [
+#	(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (9,0),
+#	(0,5)
+#])
+#g1 = Graph(verts, edges)
+g1.edgeWeights()
+
 print('planar?',g1.is_planar())
 print(g1.ascii())
 

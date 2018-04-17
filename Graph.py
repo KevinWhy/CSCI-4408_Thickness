@@ -255,11 +255,17 @@ class Graph:
 	
 	def ascii(self):
 		return planarity.ascii(self.edges_as_tuples())
-	def planar_embedding(self):
-		# Converts planarity's ascii representation... to be shown in tkinter.
-		ascii = planarity.ascii(self.edges_as_tuples())
-		
-		return 
+	
+	def edgeWeights(self):
+		adjMatrix = self.get_adj_matrix().toarray()
+		vertDegree = {
+			vert: sum(adjMatrix[i,:])
+			for i,vert in enumerate(self.vertices)
+		}
+		return edgeWeights = {	
+			edge: vertDegree[edge.vert1] + vertDegree[edge.vert2]
+			for edge in self.edges
+		}
 	
 	def get_edge_crossings(self):
 		'''
