@@ -1,3 +1,15 @@
+'''
+test.py
+
+This is an experiment to find the thickness of graphs.
+It reads some graphs, and outputs the planar subgraphs that result in a thickness.
+
+To use:
+1. Run this code, and pipe the output to a file.
+2. Copy the contents of the output file into a cell inside Mathematica.
+3. Run that cell.
+'''
+
 import tkinter as tk
 from Graph import *
 import operator

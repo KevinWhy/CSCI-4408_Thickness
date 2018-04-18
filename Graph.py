@@ -99,6 +99,12 @@ def GraphData(graphName):
 	'''
     with open('CompetitionGraphs.json') as graphJson:
         graphsJson = json.load(graphJson)[graphName]
+    return parse_graph_json(graphsJson)
+def parse_graph_json(graphsJson):
+    '''
+       This is the second part of the GraphData function.
+       Separated to let different sources of JSON call this function.
+    '''
     num_verts = graphsJson.get('verts', None)
     if num_verts is not None:
         vertices = [Vertex() for i in range(num_verts)]
@@ -129,10 +135,14 @@ def GraphData(graphName):
         edges = EdgesFromIndices(vertices, edgeIndices)
         return Graph(vertices, edges)
 
-
 # ------------------------------------
 
 def prims_alg(graph, edgeWeights):
+    '''
+        Run Prim's algorithm on a graph.
+        Returns the list of edges that are used for a minimum spanning tree
+        of the graph.
+    '''
     # Weird way to get first vertex in graph
     firstVert = None
     for vert in graph.vertices:
@@ -159,6 +169,10 @@ def prims_alg(graph, edgeWeights):
 # ------------------------------------
 
 class Vertex:
+    ''' Represents one vertex in the graph.
+        Has some additional properties so it can be displayed via GraphCanvas.
+        If x & y == None, Vertex can't be drawn.
+    '''
     # Defaults
     radius = 10
     color = "lightgray"
@@ -174,6 +188,9 @@ class Vertex:
 
 
 class Edge:
+    ''' Represents one vertex in the graph.
+        Has some additional properties so it can be displayed via GraphCanvas.
+    '''
     # Defaults
     width = 3
     color = "black"
@@ -190,7 +207,11 @@ class Edge:
 
 
 class EdgeFormula:
-    ''' y = mx + b '''
+    '''
+        Converts edge from a list of vertices to a formula:
+            y = mx + b
+        Is used to test for edge crossings.
+    '''
 
     def __init__(self, edge):
         # Vertices are stored instead of coordinates because want to check if endpoints are the same...
@@ -267,6 +288,17 @@ class EdgeFormula:
 
 
 class Graph:
+    '''
+        Represents an entire graph.
+        Can be drawn in GraphCanvas,
+        or exported as a matrix of edges... to be displayed in Mathematica.
+        
+        Also has functions to detect edge crossings.
+        Note: Edge crossings & graph drawing will fail if any vertex's
+              x == None or y == None
+        
+        Assumption: Edges hold references to vertices in the "vertices" list.
+    '''
     def __init__(self, vertices, edges):
         ''' Assumes that egdes only use vertices in the verts list. '''
         self.vertices = vertices
@@ -286,6 +318,9 @@ class Graph:
         return out_str
 
     def get_adj_matrix(self):
+        ''' Returns a scipy sparse matrix.
+            To parse through the matrix, you can call the output's "toarray" function.
+        '''
         # Start with matrix of 0s
         matrix = lil_matrix((len(self.vertices), len(self.vertices)))
         # Fill in matrix from the edges
@@ -311,9 +346,19 @@ class Graph:
         return planarity.is_planar(self.edges_as_tuples())
 
     def ascii(self):
+        ''' Calls planarity module's ascii() function.
+            However, I doubt that the output is actually planar.
+        '''
         return planarity.ascii(self.edges_as_tuples())
 
     def edgeWeights(self):
+        ''' Returns a dictionary. key = edge, value = edge weight.
+            Edge weight = sum of the incident vertice's degrees
+            
+            Concept: Higher weights -> edge is in a very "busy" part of the graph...
+                so it probably creates edge crossings.
+                Prioritize less "busy" areas of the graph... aka: lower weights
+        '''
         adjMatrix = self.get_adj_matrix().toarray()
         vertDegree = {
             vert: sum(adjMatrix[i, :])
@@ -327,8 +372,9 @@ class Graph:
     def get_edge_crossings(self):
         '''
 			Show all the line intersections.
-			Uses Sweep Line Algorithm (https://en.wikipedia.org/wiki/Sweep_line_algorithm)
-			to reduce the amount of comparisons done.
+            I tried using Sweep Line Algorithm (https://en.wikipedia.org/wiki/Sweep_line_algorithm)
+			to reduce the amount of comparisons done...
+                but it was buggy. So it's commented out.
 		'''
         PROP_ORIG_INDEX = 0  # Index in the edges list
         PROP_EDGE = 1
