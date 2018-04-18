@@ -1,26 +1,84 @@
 import tkinter as tk
 from Graph import *
+import operator
+from operator import itemgetter
 from GraphCanvas import GraphCanvas
 
 #-------------------------
 
-g1 = GraphData('graph1')
-#g1 = Kn(5)
+workingSet = []
+nextWorkingSet = []
+planes = [[]]
+firstplane = []
+#planes.append(firstplane)
+plane = 0
+
+graph = GraphData('graph1')
+#graph = Kn(5)
 #verts = [Vertex() for i in range(10)]
 #edges = EdgesFromIndices(verts, [
 #	(0,1), (1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (8,9), (9,0),
 #	(0,5)
 #])
-#g1 = Graph(verts, edges)
+#graph = Graph(verts, edges)
 
-usedEdges = prims_alg(  g1, g1.edgeWeights()  )
-spanTree = Graph(g1.vertices, usedEdges)
+weights = graph.edgeWeights()
+usedEdges = prims_alg(graph,weights)
+spanTree = Graph(graph.vertices, usedEdges)
+sortedWeights = sorted(weights.items(), key=itemgetter(1), reverse=True)
 
 #print('planar?',spanTree.is_planar())
 print(spanTree.export_mathematica())
+print(sortedWeights)
 
+for u in usedEdges:
+    planes[plane].append(u)
+
+print(planes)
+
+for w in sortedWeights:
+    if not (w[0] in usedEdges):
+        workingSet.append(w[0])
+
+#print(workingSet)
+
+while (len(workingSet) > 0):
+    #i = len(workingSet)
+    while (len(workingSet) > 0):
+        e = workingSet.pop()
+        i = len(workingSet)
+        print(i)
+        edgeset = planes[plane].copy()
+        edgeset.append(e)
+        subgraph = Graph(graph.vertices, edgeset)
+        if (subgraph.is_planar()):
+            planes[plane].append(e)
+        else:
+            nextWorkingSet.append(e)
+            #planes[plane+1].append(e)
+    workingSet = nextWorkingSet
+    nextWorkingSet = []
+    print(workingSet)
+    emptyplane = []
+    if (len(workingSet) > 0):
+        planes.append(emptyplane)
+        plane += 1
+        print(planes)
+
+j = 1
+for p in planes:
+    print("(* Plane #" + str(j) +" *)")
+    print("AdjacencyGraph[\n")
+    planarGraph = Graph(graph.vertices, p)
+    print(planarGraph.export_mathematica())
+    print('\n\n,GraphLayout->"PlanarEmbedding"]')
+    j+=1
+
+
+#print(planes)
+print("Thiccness = " + str(len(planes)))
 '''
-matrix = g1.get_adj_matrix()
+matrix = graph.get_adj_matrix()
 print('ORIG:')
 for ar in (matrix).toarray():
 	print(*ar)
