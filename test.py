@@ -6,6 +6,12 @@ from GraphCanvas import GraphCanvas
 
 def mathematica_comment_print(*args, **kwargs):
     print('(*', *args, '*)', *kwargs)
+def mathematica_string_print(*args, **kwargs):
+    args = [
+        str.replace('"', '\\"')
+        for str in args
+    ]
+    print('Print["', *args, '"]', *kwargs)
 
 #-------------------------
 
@@ -67,17 +73,20 @@ def thickness_solver(graph):
             #print(planes)
     
     j = 1
+    print('{')
     for p in planes:
-        mathematica_comment_print("Plane #" + str(j))
+        if j > 1:
+            print(',')
         print("AdjacencyGraph[\n")
         planarGraph = Graph(graph.vertices, p)
         print(planarGraph.export_mathematica())
         print('\n,GraphLayout->"PlanarEmbedding"]')
         j+=1
+    print('}')
     
     
     #print(planes)
-    print('Print["',  "Thiccness = " + str(len(planes))  ,'"]')
+    mathematica_string_print("Thiccness = " + str(len(planes)))
 
 
 '''
@@ -92,8 +101,17 @@ for i in range(4, 12):
     print('\n\n')
 '''
 
+# Competition graphs were the ones in the JSON... & K5, 8, 9
+graphs = {
+    'K' +str(i): Kn(i)
+    for i in [5, 8, 9]
+}
 for graphName in GRAPH_DATA_NAMES:
-    mathematica_comment_print(graphName +':')
+    graphs[graphName] = GraphData(graphName)
+
+for graphName, graph in graphs.items():
+    mathematica_string_print(graphName +':')
     mathematica_comment_print('--------------------')
-    thickness_solver(GraphData(graphName))
+    thickness_solver(graph)
+    mathematica_string_print('---------------------')
     print('\n\n')
