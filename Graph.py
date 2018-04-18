@@ -88,7 +88,10 @@ def BipartiteGraph(n, m):
     ]
     return Graph(vertsA + vertsB, edges)
 
-
+GRAPH_DATA_NAMES = [
+    'graph1', 'graph2', 'graph3', 'graph4',
+    'mystery1', 'mystery2', 'mystery3',
+]
 def GraphData(graphName):
     '''
 		Reads the graph with the given name from CompetitionGraphs.json
@@ -112,7 +115,7 @@ def GraphData(graphName):
         for edge in graphsJson['edges']:
             v1Index = edge[0] - 1
             v2Index = edge[1] - 1
-            edgeIndices.append(v1Index, v2Index)
+            edgeIndices.append((v1Index, v2Index))
             maxIndex = max(v1Index, v2Index, maxIndex)
             if vertexDict.get(v1Index, None) is None:
                 vertexDict[v1Index] = Vertex()
@@ -121,7 +124,7 @@ def GraphData(graphName):
 
         # Convert dictionary to list
         vertices = []
-        for i in range(maxIndex):
+        for i in range(0, maxIndex +1):
             vertices.append(vertexDict.get(i, None))
         edges = EdgesFromIndices(vertices, edgeIndices)
         return Graph(vertices, edges)
