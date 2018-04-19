@@ -10,7 +10,7 @@ import json
 import scipy
 import planarity
 from scipy.sparse import lil_matrix
-
+import itertools
 
 # ------------------------------------
 
@@ -134,6 +134,41 @@ def parse_graph_json(graphsJson):
             vertices.append(vertexDict.get(i, None))
         edges = EdgesFromIndices(vertices, edgeIndices)
         return Graph(vertices, edges)
+
+def inflate(graph, r):
+    '''
+        Returns an r-inflated verion of the input graph.
+    '''
+    adjMatrix = graph.get_adj_matrix().toarray()
+    newVerts = {}
+    newEdges = []
+    # Make a Kr subgraph for every vertex in oroginal graph
+    for origIndex, origVertRow in enumerate(adjMatrix):
+        newVerts[origIndex] = [Vertex() for i in range(r)]
+#        print('orig = ',origIndex, '___new:',newVerts[origIndex])
+        for i, vert1 in enumerate(newVerts[origIndex]): # Connect the new vertices
+            for vert2 in newVerts[origIndex][i+1 : ]:
+                newEdges.append(Edge(vert1, vert2))
+    
+    # Check every cell in adj. matrix
+    for origV1, origVertRow in enumerate(adjMatrix):
+        for origV2, numConnections in enumerate(origVertRow):
+            # Graph is not directional, so only check the upper-right triangle of adj matrix
+            # For some reason, using the slice: [origV1+1 : ] finds 0,0... & misses a lot of cells
+            if origV2 > origV1:
+                # If connected, connect the r-inflated version of the vertices
+                if numConnections > 0:
+                    for vert1 in newVerts[origV1]:
+                        for vert2 in newVerts[origV2]:
+                            newEdges.append(Edge(vert1, vert2))
+    #for i,list in newVerts.items():
+    #    print(i,":",list)
+    #print('\nedges:')
+    #for e in newEdges:
+    #    print(e.vert1, ' > ', e.vert2)
+    # Flatten dictionary of arrays into one, large array...
+    newVertsList = [i for i in itertools.chain(*newVerts.values())]
+    return Graph(newVertsList, newEdges)
 
 # ------------------------------------
 
@@ -305,7 +340,7 @@ class Graph:
         self.edges = edges
 
     def export_mathematica(self):
-        out_str = '{'
+        out_str = 'AdjacencyGraph[\n' + '{'
         first_row = True
         for row in self.get_adj_matrix().toarray():
             if not first_row:
@@ -314,7 +349,7 @@ class Graph:
             out_str += ','.join([str(int(i)) for i in row])
             out_str += '}'
             first_row = False
-        out_str += '}'
+        out_str += '}\n' + ',GraphLayout->"PlanarEmbedding"]'
         return out_str
 
     def get_adj_matrix(self):

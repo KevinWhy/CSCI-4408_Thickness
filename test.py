@@ -47,7 +47,9 @@ def thickness_solver(graph):
     sortedWeights = sorted(weights.items(), key=itemgetter(1), reverse=False)
     
     #print('planar?',spanTree.is_planar())
+    #mathematica_string_print('_____TREE____')
     #print(spanTree.export_mathematica())
+    #mathematica_string_print('___________')
     #print(sortedWeights)
     
     for u in usedEdges:
@@ -89,10 +91,8 @@ def thickness_solver(graph):
     for p in planes:
         if j > 1:
             print(',')
-        print("AdjacencyGraph[\n")
         planarGraph = Graph(graph.vertices, p)
         print(planarGraph.export_mathematica())
-        print('\n,GraphLayout->"PlanarEmbedding"]')
         j+=1
     print('}')
     
@@ -112,6 +112,23 @@ for i in range(4, 12):
     thickness_solver(Kn(i))
     print('\n\n')
 '''
+
+# Test on some inflations of a tree
+v = [Vertex() for i in range(10)]
+e = EdgesFromIndices(v, [
+    (0,1), (1,2), (2,4), (4,6), (6,8), (6,9),
+    (0,3), (3,7),
+    (2,5)
+])
+g = Graph(v, e)
+for r in range(1, 11):
+    mathematica_string_print('inflate #'+ str(r) +':')
+    mathematica_comment_print('--------------------')
+    thickness_solver(inflate(g, r))
+    mathematica_string_print('---------------------')
+    print('\n\n')
+
+#-------------------------------#
 
 # Competition graphs were the ones in the JSON... & K5, 8, 9
 graphs = {
